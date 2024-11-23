@@ -2,15 +2,14 @@ const activityHub = require('../tools/activityHub');
 const wakeLock = require('../tools/wakeLock');
 
 class ActivityManager {
-	constructor(ipcRenderer, config) {
-		this.ipcRenderer = ipcRenderer;
+	constructor(config) {
 		this.config = config;
 		this.myStatus = -1;
 	}
 
 	start() {
 		setActivityHandlers(this);
-		setEventHandlers(this);
+		setEventHandlers();
 		activityHub.start();
 		activityHub.setDefaultTitle(this.config.appTitle);
 		this.watchSystemIdleState();
@@ -18,7 +17,7 @@ class ActivityManager {
 
 	watchSystemIdleState() {
 		const self = this;
-		self.ipcRenderer.invoke('get-system-idle-state').then((state) => {
+		window.api.getSystemIdleState().then((state) => {
 			let timeOut;
 			if (this.config.awayOnSystemIdle) {
 				timeOut = this.setStatusAwayWhenScreenLocked(state);
@@ -53,18 +52,18 @@ class ActivityManager {
 
 function setActivityHandlers(self) {
 	activityHub.on('activities-count-updated', updateActivityCountHandler());
-	activityHub.on('incoming-call-created', incomingCallCreatedHandler(self));
-	activityHub.on('incoming-call-connecting', incomingCallConnectingHandler(self));
-	activityHub.on('incoming-call-disconnecting', incomingCallDisconnectingHandler(self));
-	activityHub.on('call-connected', callConnectedHandler(self));
-	activityHub.on('call-disconnected', callDisconnectedHandler(self));
+	activityHub.on('incoming-call-created', incomingCallCreatedHandler());
+	activityHub.on('incoming-call-connecting', incomingCallConnectingHandler());
+	activityHub.on('incoming-call-disconnecting', incomingCallDisconnectingHandler());
+	activityHub.on('call-connected', callConnectedHandler());
+	activityHub.on('call-disconnected', callDisconnectedHandler());
 	activityHub.on('meeting-started', meetingStartNotifyHandler(self));
-	activityHub.on('my-status-changed', myStatusChangedHandler(self));
+	activityHub.on('my-status-changed', myStatusChangedHandler());
 }
 
-function setEventHandlers(self) {
-	self.ipcRenderer.on('enable-wakelock', () => wakeLock.enable());
-	self.ipcRenderer.on('disable-wakelock', () => wakeLock.disable());
+function setEventHandlers() {
+	window.api.onEnableWakeLock(() => wakeLock.enable());
+	window.api.onDisableWakeLock(() => wakeLock.disable());
 }
 
 function updateActivityCountHandler() {
@@ -74,33 +73,33 @@ function updateActivityCountHandler() {
 	};
 }
 
-function incomingCallCreatedHandler(self) {
+function incomingCallCreatedHandler() {
 	return async (data) => {
-		self.ipcRenderer.invoke('incoming-call-created', data);
+		window.api.incomingCallCreated(data);
 	};
 }
 
-function incomingCallConnectingHandler(self) {
+function incomingCallConnectingHandler() {
 	return async () => {
-		self.ipcRenderer.invoke('incoming-call-connecting');
+		window.api.incomingCallConnecting();
 	};
 }
 
-function incomingCallDisconnectingHandler(self) {
+function incomingCallDisconnectingHandler() {
 	return async () => {
-		self.ipcRenderer.invoke('incoming-call-disconnecting');
+		window.api.incomingCallDisconnecting();
 	};
 }
 
-function callConnectedHandler(self) {
+function callConnectedHandler() {
 	return async () => {
-		self.ipcRenderer.invoke('call-connected');
+		window.api.callConnected();
 	};
 }
 
-function callDisconnectedHandler(self) {
+function callDisconnectedHandler() {
 	return async () => {
-		self.ipcRenderer.invoke('call-disconnected');
+		window.api.callDisconnected();
 	};
 }
 
@@ -116,11 +115,9 @@ function meetingStartNotifyHandler(self) {
 	return null;
 }
 
-// eslint-disable-next-line no-unused-vars
-function myStatusChangedHandler(self) {
-	// eslint-disable-next-line no-unused-vars
+function myStatusChangedHandler() {
 	return async (event) => {
-		self.ipcRenderer.invoke('user-status-changed', { data: event.data });
+		window.api.userStatusChanged(event.data);
 	};
 }
 

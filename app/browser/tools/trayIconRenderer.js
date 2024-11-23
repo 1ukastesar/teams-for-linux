@@ -1,8 +1,7 @@
 const { nativeImage } = require('electron');
 const TrayIconChooser = require('./trayIconChooser');
 class TrayIconRenderer {
-	init(config, ipcRenderer) {
-		this.ipcRenderer = ipcRenderer;
+	init(config) {
 		this.config = config;
 		const iconChooser = new TrayIconChooser(config);
 		this.baseIcon = nativeImage.createFromPath(iconChooser.getFile());
@@ -14,12 +13,13 @@ class TrayIconRenderer {
 		const count = event.detail.number;
 		this.render(count).then(icon => {
 			console.debug('sending tray-update');
-			this.ipcRenderer.send('tray-update', {
-				icon: icon,
-				flash: (count > 0 && !this.config.disableNotificationWindowFlash)
-			});
+			const flash = count > 0 && !this.config.disableNotificationWindowFlash;
+			window.api.updateTrayIcon(
+				icon,
+				flash
+			);
 		});
-		this.ipcRenderer.invoke('set-badge-count', count);
+		window.api.setBadgeCount(count);
 	}
 
 	render(newActivityCount) {

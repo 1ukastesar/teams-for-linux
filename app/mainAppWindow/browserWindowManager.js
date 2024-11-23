@@ -59,8 +59,6 @@ class BrowserWindowManager {
                 partition: this.config.partition,
                 preload: path.join(__dirname, '..', 'browser', 'index.js'),
                 plugins: true,
-                contextIsolation: this.config.contextIsolation,
-                sandbox: this.config.sandbox,
                 spellcheck: true
             },
         });

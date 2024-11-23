@@ -1,4 +1,4 @@
-const { ipcMain, WebContentsView } = require('electron');
+const { ipcMain, WebContentsView, BrowserWindow } = require('electron');
 const path = require('path');
 
 let _StreamSelector_parent = new WeakMap();
@@ -73,13 +73,14 @@ class StreamSelector {
 			//'screen:x:0' -> whole screen
 			//'window:x:0' -> small window
 			// show captured source in a new view? Maybe reuse the same view, but make it smaller? probably best a new "file"/view
-			closeView({ view: self, _resize, _close, source });
+			closeView({ view: self, _resize, _close, source});
 		};
 
 		this.parent.on('resize', _resize);
 		ipcMain.once('selected-source', _close);
+		// ipcMain.once('selected-source', showSharedContent);
 		ipcMain.once('close-view', _close);
-	}
+	}		
 }
 
 function closeView(properties) {
@@ -105,5 +106,35 @@ function resizeView(view) {
 		});
 	}, 0);
 }
+
+// function showSharedContent() {
+// 	let self = this;
+// 	self.view = new BrowserWindow({});
+// 	self.view.loadFile(path.join(__dirname, 'sharedContent.html'));
+
+// 	// let _resize = () => {
+// 	// 	resizePreview(self);
+// 	// };
+// 	// resizePreview(self);
+
+// 	let _close = (_event, source) => {
+// 		closeView({ view: self, _close, source});
+// 	};
+
+// 	// this.parent.on('resize', _resize);
+// 	ipcMain.once('close-view', _close);
+// }
+
+// function resizePreview(view) {
+// 	setTimeout(() => {
+// 		const pbounds = view.parent.getBounds();
+// 		view.view.setBounds({
+// 			x: 0,
+// 			y: pbounds.height - 180,
+// 			width: pbounds.width,
+// 			height: 180
+// 		});
+// 	}, 0);
+// }
 
 module.exports = { StreamSelector };

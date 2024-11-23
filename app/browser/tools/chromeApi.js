@@ -1,8 +1,4 @@
-const { ipcRenderer } = require('electron');
 const disableAutogain = require('./disableAutogain');
-// In order to have this functionality working, contextIsolation should be disabled.
-// In new versions of electron, contextIsolation is set to true by default.
-// We should explicitly set it to false when creating BrowserWindow
 
 let _getDisplayMedia;
 
@@ -31,10 +27,10 @@ async function customGetDisplayMediaWayland(...args) {
 function customGetDisplayMediaX11() {
 	return new Promise((resolve, reject) => {
 		// Request main process to allow access to screen sharing
-		ipcRenderer.once('select-source', (_event, source) => {
+		window.api.onceSelectSource((_event, source) => {
 			startStreaming({ source, resolve, reject });
 		});
-		ipcRenderer.send('select-source');
+		window.api.selectSource();
 	});
 }
 

@@ -2,8 +2,7 @@ const ReactHandler = require('./reactHandler');
 const instance = require('./instance');
 
 class ThemeManager {
-	init(config, ipcRenderer) {
-		this.ipcRenderer = ipcRenderer;
+	init(config) {
 		this.config = config;
 
 		const clientPreferences = ReactHandler.getTeams2ClientPreferences();
@@ -14,7 +13,7 @@ class ThemeManager {
 
 		if (config.followSystemTheme) {
 			console.debug('followSystemTheme', config.followSystemTheme);
-			this.ipcRenderer.on('system-theme-changed', this.applyTheme);   
+			window.api.onSystemThemeChanged(this.applyTheme);
 		}
 	}
 

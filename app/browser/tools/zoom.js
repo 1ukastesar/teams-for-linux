@@ -1,4 +1,4 @@
-const { webFrame, ipcRenderer } = require('electron');
+const { webFrame } = require('electron');
 
 //zoomFactor can be configurable
 const zoomFactor = 0.25;
@@ -52,7 +52,7 @@ class Zoom {
 }
 
 function restoreZoomLevelInternal(config) {
-	ipcRenderer.invoke('get-zoom-level', config.partition).then(zoomLevel => {
+	window.api.getZoomLevel(config.partition).then(zoomLevel => {
 		webFrame.setZoomLevel(zoomLevel);
 	});
 }
@@ -68,7 +68,7 @@ function setNextZoomLevel(keyName, config) {
 	zoomLevel = zoomOffset === 0 ? 0 : zoomLevel + zoomOffset * zoomFactor;
 	if (zoomLevel < zoomMin || zoomLevel > zoomMax) return;
 	webFrame.setZoomLevel(zoomLevel);
-	ipcRenderer.invoke('save-zoom-level', {
+	window.api.saveZoomLevel({
 		partition: config.partition,
 		zoomLevel: webFrame.getZoomLevel()
 	});

@@ -1,22 +1,10 @@
 const instance = require('./instance');
 const ReactHandler = require('./reactHandler');
 
-let _Settings_config = new WeakMap();
-let _Settings_ipcRenderer = new WeakMap();
 class Settings {
-	init(config, ipcRenderer) {
-		_Settings_config.set(this, config);
-		_Settings_ipcRenderer.set(this, ipcRenderer);
-		this.ipcRenderer.on('get-teams-settings', retrieve);
-		this.ipcRenderer.on('set-teams-settings', restore);
-	}
-
-	get config() {
-		return _Settings_config.get(this);
-	}
-
-	get ipcRenderer() {
-		return _Settings_ipcRenderer.get(this);
+	init() {
+		window.api.onGetTeamsSettings(retrieve);
+		window.api.onSetTeamsSettings(restore);
 	}
 }
 

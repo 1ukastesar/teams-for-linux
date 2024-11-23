@@ -1,14 +1,94 @@
+const {
+    contextBridge,
+    ipcRenderer
+} = require("electron");
+
+contextBridge.exposeInMainWorld(
+    "api", {
+        submitForm: (args) => {
+            ipcRenderer.send('submitForm', args);
+        },
+		getConfig: () => {
+			ipcRenderer.invoke('get-config')
+		},
+		playNotificationSound: (sound) => {
+			ipcRenderer.invoke('play-notification-sound', sound);
+		},
+		showNotification: (options) => {
+			ipcRenderer.invoke('show-notification', options);
+		},
+		getSystemIdleState: () => {
+			ipcRenderer.invoke('get-system-idle-state');
+		},
+		incommingCallCreated: (data) => {
+			ipcRenderer.invoke('incoming-call-created', data);
+		},
+		incommingCallConnecting: () => {
+			ipcRenderer.invoke('incoming-call-connecting');
+		},
+		incommingCallDisconnecting: () => {
+			ipcRenderer.invoke('incoming-call-disconnecting');
+		},
+		callConnected: () => {
+			ipcRenderer.invoke('call-connected');
+		},
+		callDisconnected: () => {
+			ipcRenderer.invoke('call-disconnected');
+		},
+		selectSource: () => {
+			ipcRenderer.send('select-source');
+		},
+		userStatusChanged: (data) => {
+			ipcRenderer.invoke('user-status-changed', data);
+		},
+		getZoomLevel: (partition) => {
+			ipcRenderer.invoke('get-zoom-level', partition)
+		},
+		saveZoomLevel: (zoomLevel, partition) => {
+			ipcRenderer.invoke('save-zoom-level', zoomLevel, partition)
+		},
+		onEnableWakeLock: (callback) => {
+			ipcRenderer.on('enable-wakelock', callback);
+		},
+		onDisableWakeLock: (callback) => {
+			ipcRenderer.on('disable-wakelock', callback);
+		},
+		onceSelectSource: (callback) => {
+			ipcRenderer.once('select-source', callback);
+		},
+		updateTrayIcon: (icon, flash) => {
+			ipcRenderer.send('tray-update', {
+				icon: icon,
+				flash: flash,
+			});
+		},
+		setBadgeCount: (count) => {
+			ipcRenderer.invoke('set-badge-count', count);
+		},
+		onSystemThemeChanged: (callback) => {
+			ipcRenderer.on('system-theme-changed', callback);
+		},
+		onGetTeamsSettings: (callback) => {
+			ipcRenderer.on('get-teams-settings', callback)
+		},
+		onSetTeamsSettings: (callback) => {
+			ipcRenderer.on('set-teams-settings', callback)
+		},
+		getCustomBgList: () => {
+			ipcRenderer.invoke('get-custom-bg-list');
+		},
+    },
+);
+
 (function () {
-	const { ipcRenderer } = require('electron');
 	const ActivityManager = require('./notifications/activityManager');
 
 	let config;
-	ipcRenderer.invoke('get-config').then(mainConfig => {
+	window.api.getConfig().then(mainConfig => {
 		config = mainConfig;
-		initializeModules(config, ipcRenderer);
+		initializeModules(config);
 
-		new ActivityManager(ipcRenderer, config).start();
-
+		new ActivityManager(config).start();
 	});
 
 	Object.defineProperty(navigator.serviceWorker, 'register', {
@@ -30,18 +110,18 @@
 			options.requireInteraction = false; // Explicitly setting false for Ubuntu Unity DE. Others are unaffected.
 
 			if (config.notificationMethod === 'web') {
-				const notifSound = {
+				const notificationSound = {
 					type: options.type,
 					audio: 'default',
 					title: title,
 					body: options.body
 				};
 				console.debug('Requesting application to play sound');
-				ipcRenderer.invoke('play-notification-sound', notifSound);
+				window.api.playNotificationSound(notificationSound);
 				console.debug('Continues to default notification workflow');
 				return new classicNotification(title, options);
 			} else {
-				ipcRenderer.invoke('show-notification', options);
+				window.api.showNotification(options);
 				return { onclick: null, onclose: null, onerror: null };
 			}
 		}
@@ -57,17 +137,17 @@
 	window.Notification = CustomNotification;
 }());
 
-function initializeModules(config, ipcRenderer) {
+function initializeModules(config) {
 	require('./tools/zoom').init(config);
 	require('./tools/shortcuts').init(config);
 	require('./tools/chromeApi')(config);
 	require('./tools/mutationTitle').init(config);
 	if (config.trayIconEnabled) {
 		console.debug('tray icon is enabled');
-		require('./tools/trayIconRenderer').init(config, ipcRenderer);
+		require('./tools/trayIconRenderer').init(config);
 	}
-	require('./tools/settings').init(config, ipcRenderer);
-	require('./tools/customBackgrounds')(config, ipcRenderer);
-	require('./tools/theme').init(config, ipcRenderer);
+	require('./tools/settings').init();
+	require('./tools/customBackgrounds')(config);
+	require('./tools/theme').init(config);
 	require('./tools/emulatePlatform').init(config);
 }

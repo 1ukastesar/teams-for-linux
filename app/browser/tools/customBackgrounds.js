@@ -5,11 +5,9 @@ let bgMSService = null;
 let bgMSMethod = null;
 // eslint-disable-next-line no-unused-vars
 let config = null;
-let ipRenderer = null;
 
-function init(conf, ipcr) {
+function init(conf) {
 	config = conf;
-	ipRenderer = ipcr;
 	instance.whenReady().then(overrideMSMethod).catch(() => {
 		console.error('Failed to override MS Method');
 	});
@@ -23,7 +21,7 @@ async function overrideMSMethod(inst) {
 
 async function customBGProvider(...args) {
 	const ms_response = config.customBGServiceIgnoreMSDefaults ? [] : await bgMSMethod.apply(bgMSService, [...args]);
-	const customList = await ipRenderer.invoke('get-custom-bg-list');
+	const customList = await window.api.getCustomBgList();
 	ms_response.push(...customList);
 	return ms_response;
 }
