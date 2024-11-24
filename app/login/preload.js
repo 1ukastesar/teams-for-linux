@@ -4,7 +4,7 @@ const {
 } = require("electron");
 
 contextBridge.exposeInMainWorld(
-    "api", {
+    "login", {
         submitForm: (args) => {
             ipcRenderer.send('submitForm', args);
         },

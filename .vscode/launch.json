@@ -5,20 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Main Process",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
-            "args" : ["--disable-http-cache","./app"]
-        },
-        {
             "type": "node",
             "request": "launch",
             "name": "Electron: Main",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
             "runtimeArgs": [
-                "--remote-debugging-port=9223",
+                "--remote-debugging-port=9224",
                 "."
             ],
             "windows": {
@@ -29,7 +21,7 @@
             "name": "Electron: Renderer",
             "type": "chrome",
             "request": "attach",
-            "port": 9223,
+            "port": 9224,
             "webRoot": "${workspaceFolder}",
             "timeout": 30000,
             "resolveSourceMapLocations": [

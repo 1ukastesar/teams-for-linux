@@ -19,15 +19,15 @@ Here is the list of available arguments and its usage:
 | appIconType                     | Type of tray icon to be used default/light/dark                                           | *default*, light, dark              |
 | appIdleTimeout                  | A numeric value in seconds as duration before app considers the system as idle             | 300                   |
 | appIdleTimeoutCheckInterval     | A numeric value in seconds as poll interval to check if the appIdleTimeout is reached      | 10                    |
-| appLogLevels  **deprecated - use logLevels**                  | Comma separated list of log levels (error,warn,info,debug)                                | error,warn            |
+| appLogLevels  **deprecated - use logLevels** | Comma separated list of log levels (error,warn,info,debug)                                | error,warn            |
 | appTitle                        | A text to be suffixed with page title                                                    | Microsoft Teams       |
 | authServerWhitelist             | Set auth-server-whitelist value (string)                                                           | *                |
 | awayOnSystemIdle                | Boolean to set the user status as away when system goes idle                                        | false               |
 | chromeUserAgent                 | Google Chrome User Agent                                                                 | Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36                |
 | class							  | A custom value for the WM_CLASS property                                                  |                 |
-| contextIsolation 	   | Use context isolation in the renderer process (disabling this will break some functionality) | false               |
+| contextIsolation 	 **forced to true - please remove**  | Use context isolation in the renderer process (disabling this will break some functionality) | false               |
 | customBGServiceBaseUrl          | Base URL of the server which provides custom background images                            | http://localhost                |
-| customBGServiceIgnoreMSDefaults | A boolean flag indicates whether to ignore Microsoft provided images or not                       | false               |
+| customBGServiceIgnoreMSDefaults **removed functionality - please remove**| A boolean flag indicates whether to ignore Microsoft provided images or not                       | false               |
 | customBGServiceConfigFetchInterval | A numeric value in seconds as poll interval to download background service config download | 0                |
 | customCACertsFingerprints       | Array of custom CA Certs Fingerprints to allow SSL unrecognized signer or self signed certificate | []             |
 | customCSSName                   | custom CSS name for the packaged available css files                                      |                  |
@@ -64,7 +64,7 @@ Here is the list of available arguments and its usage:
 | optInTeamsV2                    | Boolean to opt in to use Teams V2                                                                   | false               |
 | partition                       | BrowserWindow webpreferences partition                                                    | persist:teams-4-linux                |
 | proxyServer                     | Proxy Server with format address:port (string)                                                  | null                |
-| sandbox				  | Sandbox for the renderer process  (disabling this will break functionality)                                                | false               |
+| sandbox			**forced to true - please remove**  | Sandbox for the renderer process  (disabling this will break functionality)                                                | false               |
 | screenLockInhibitionMethod      | Screen lock inhibition method to be used (`Electron`/`WakeLockSentinel`)                      | *Electron*, WakeLockSentinel                |
 | spellCheckerLanguages           | Array of languages to use with Electron's spell checker                    | []                 |
 | ssoBasicAuthUser           | Login that will be sent for basic_auth SSO login. (string) |                  |
@@ -128,7 +128,7 @@ You can find an example of this feature in the [../customBackground/example/READ
 ### Things to remember:
 
 1. Currently app does not feature adding or removing custom images. You have to rely on any locally/remotely hosted web servers to serve images.
-2. 3 new command-line parameters `customBGServiceBaseUrl`, `customBGServiceIgnoreMSDefaults` and `customBGServiceConfigFetchInterval` are introduced. See above for details.
+2. 2 new command-line parameters `customBGServiceBaseUrl` and `customBGServiceConfigFetchInterval` are introduced. See above for details.
 3. Custom images are always loaded with `<customBGServiceBaseUrl>/<image-path>`. So, you have to make sure the web server is running and `<customBGServiceBaseUrl>` responds to the request.
 4. You can choose any web server of your choice but make sure `Access-Control-Allow-Origin` is set to `*` in response headers from web server.
 5. In Teams version 2, this will replace Microsoft's default images.

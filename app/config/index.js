@@ -94,6 +94,7 @@ function extractYargConfig(configObject, appVersion) {
 				type: 'string'
 			},
 			customBGServiceIgnoreMSDefaults: {
+				deprecated: 'It has been removed.\n Please remove this option from your config file',
 				default: false,
 				describe: 'A flag indicates whether to ignore Microsoft provided images or not',
 				type: 'boolean'
@@ -119,6 +120,7 @@ function extractYargConfig(configObject, appVersion) {
 				type: 'string'
 			},
 			contextIsolation: {
+				deprecated: 'We force contextIsolation now.\n Please remove this option from your config file',
 				default: false,
 				describe: 'Use contextIsolation on the main BrowserWindow (WIP - Disabling this will break most functionality)',
 				type: 'boolean'
@@ -165,7 +167,7 @@ function extractYargConfig(configObject, appVersion) {
 				type: 'string'
 			},
 			disableAutogain: {
-				default: false,
+				default: true,
 				describe: 'A flag indicates whether to disable mic auto gain or not',
 				type: 'boolean'
 			},
@@ -302,12 +304,13 @@ function extractYargConfig(configObject, appVersion) {
 				type: 'string'
 			},
 			sandbox: {
+				deprecated: 'We force sandbox now.\n Please remove this option from your config file',
 				default: false,
 				describe: 'Sandbox for the BrowserWindow (WIP - disabling this might break some functionality)',
 				type: 'boolean'
 			},
 			screenLockInhibitionMethod: {
-				default: 'Electron',
+				default: 'WakeLockSentinel',
 				describe: 'Screen lock inhibition method to be used (Electron/WakeLockSentinel)',
 				type: 'string',
 				choices: ['Electron', 'WakeLockSentinel']

@@ -57,7 +57,7 @@ class BrowserWindowManager {
 
             webPreferences: {
                 partition: this.config.partition,
-                preload: path.join(__dirname, '..', 'browser', 'index.js'),
+                preload: path.join(__dirname, 'preload.js'),
                 plugins: true,
                 spellcheck: true
             },
