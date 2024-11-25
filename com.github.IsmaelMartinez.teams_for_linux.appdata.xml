@@ -23,6 +23,15 @@
 				</ul>
 			</description>
 		</release>
+		<release version="1.12.1" date="2024-11-25">
+			<description>
+				<ul>
+					<li>Improving security on the loginForm by removing the need of contentIsolation</li>
+					<li>Removing the already deprecated `onlineCheckMethod` option from the config options</li>
+					<li>Updating the HISTORY section to be more inline with the current stated of affairs</li>
+				</ul>
+			</description>
+		</release>
 		<release version="1.12.0" date="2024-11-15">
 			<description>
 				<ul>

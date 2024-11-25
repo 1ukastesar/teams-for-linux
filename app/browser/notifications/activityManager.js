@@ -8,8 +8,6 @@ class ActivityManager {
 
 	start() {
 		setActivityHandlers(this);
-		activityHub.start();
-		activityHub.setDefaultTitle(this.config.appTitle);
 		this.watchSystemIdleState();
 	}
 
