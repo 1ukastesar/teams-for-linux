@@ -62,12 +62,6 @@ function extractYargConfig(configObject, appVersion) {
 				describe: 'A numeric value in seconds as poll interval to check if the appIdleTimeout is reached',
 				type: 'number'
 			},
-			appLogLevels: {
-				deprecated: 'Use `logConfig` instead',
-				default: 'error,warn,info,debug',
-				describe: 'Comma separated list of log levels (error,warn,info,debug)',
-				type: 'string'
-			},
 			appTitle: {
 				default: 'Microsoft Teams',
 				describe: 'A text to be suffixed with page title',
@@ -118,12 +112,6 @@ function extractYargConfig(configObject, appVersion) {
 				default: '',
 				describe: 'custom CSS styles file location',
 				type: 'string'
-			},
-			contextIsolation: {
-				deprecated: 'We force contextIsolation now.\n Please remove this option from your config file',
-				default: false,
-				describe: 'Use contextIsolation on the main BrowserWindow (WIP - Disabling this will break most functionality)',
-				type: 'boolean'
 			},
 			customUserDir: {
 				default: null,
@@ -281,11 +269,6 @@ function extractYargConfig(configObject, appVersion) {
 				describe: 'Set enable-ntlm-v2 value',
 				type: 'string'
 			},
-			optInTeamsV2: {
-				default: false,
-				describe: 'Opt in to use Teams V2',
-				type: 'boolean'
-			},
 			partition: {
 				default: 'persist:teams-4-linux',
 				describe: 'BrowserWindow webpreferences partition',
@@ -295,12 +278,6 @@ function extractYargConfig(configObject, appVersion) {
 				default: null,
 				describe: 'Proxy Server with format address:port',
 				type: 'string'
-			},
-			sandbox: {
-				deprecated: 'We force sandbox now.\n Please remove this option from your config file',
-				default: false,
-				describe: 'Sandbox for the BrowserWindow (WIP - disabling this might break some functionality)',
-				type: 'boolean'
 			},
 			screenLockInhibitionMethod: {
 				default: 'WakeLockSentinel',
@@ -339,7 +316,7 @@ function extractYargConfig(configObject, appVersion) {
 				type: 'boolean'
 			},
 			url: {
-				default: 'https://teams.microsoft.com',
+				default: 'https://teams.microsoft.com/v2',
 				describe: 'Microsoft Teams URL',
 				type: 'string'
 			},

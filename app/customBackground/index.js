@@ -31,9 +31,7 @@ class CustomBackground {
     
         const remotePath = httpHelper.joinURLs(customBGUrl.href, 'config.json');
         console.debug(`Fetching custom background configuration from '${remotePath}'`);
-        httpHelper.getAsync(remotePath)
-            .then(this.onCustomBGServiceConfigDownloadSuccess.bind(this))
-            .catch(this.onCustomBGServiceConfigDownloadFailure.bind(this));
+        httpHelper.getAsync(remotePath);
         if (this.config.customBGServiceConfigFetchInterval > 0) {
             setTimeout(this.downloadCustomBGServiceRemoteConfig, this.config.customBGServiceConfigFetchInterval * 1000);
         }
@@ -49,15 +47,7 @@ class CustomBackground {
     }
 
     beforeRequestHandlerRedirectUrl(details) {
-        // Custom background for teams v1
-        if (details.url.startsWith('https://statics.teams.cdn.office.net/teams-for-linux/custom-bg/')) {
-            const reqUrl = details.url.replace('https://statics.teams.cdn.office.net/teams-for-linux/custom-bg/', '');
-            const imgUrl = httpHelper.joinURLs(customBGServiceUrl.href, reqUrl);
-            console.debug(`Forwarding '${details.url}' to '${imgUrl}'`);
-            return { redirectURL: imgUrl };
-        }
-        // Custom background replace for teams v2
-        else if (details.url.startsWith('https://statics.teams.cdn.office.net/evergreen-assets/backgroundimages/') && this.config.isCustomBackgroundEnabled) {
+        if (details.url.startsWith('https://statics.teams.cdn.office.net/evergreen-assets/backgroundimages/') && this.config.isCustomBackgroundEnabled) {
             const reqUrl = details.url.replace('https://statics.teams.cdn.office.net/evergreen-assets/backgroundimages/', '');
             const imgUrl = httpHelper.joinURLs(customBGServiceUrl.href, reqUrl);
             console.debug(`Forwarding '${details.url}' to '${imgUrl}'`);
@@ -102,41 +92,6 @@ class CustomBackground {
         return customBGServiceUrl?.protocol === 'http:';
     }
 
-    onCustomBGServiceConfigDownloadFailure(err) {
-        const dlpath = path.join(this.app.getPath('userData'), 'custom_bg_remote.json');
-        console.error(`Failed to fetch custom background remote configuration. ${err.message}`);
-        try {
-            fs.writeFileSync(dlpath, JSON.stringify([]));
-        }
-        catch (err) {
-            console.error(`Failed to save custom background default configuration at '${dlpath}'. ${err.message}`);
-        }
-    }
-    
-    onCustomBGServiceConfigDownloadSuccess(data) {
-        const downloadPath = path.join(this.app.getPath('userData'), 'custom_bg_remote.json');
-        try {
-            const configJSON = JSON.parse(data);
-            for (let config of configJSON) {
-                setPath(config);
-            }
-            fs.writeFileSync(downloadPath, JSON.stringify(configJSON));
-            console.debug(`Custom background service remote configuration stored at '${downloadPath}'`);
-        }
-        catch (err) {
-            console.error(`Fetched custom background remote configuration but failed to save at '${downloadPath}'. ${err.message}`);
-        }
-    }
-}
-
-function setPath(cfg) {
-    if (!cfg.src.startsWith('/teams-for-linux/custom-bg/')) {
-        cfg.src = httpHelper.joinURLs('/teams-for-linux/custom-bg/', cfg.src);
-    }
-
-    if (!cfg.thumb_src.startsWith('/teams-for-linux/custom-bg/')) {
-        cfg.thumb_src = httpHelper.joinURLs('/teams-for-linux/custom-bg/', cfg.thumb_src);
-    }
 }
 
 function setConnectSrcSecurityPolicy(policies) {
@@ -152,6 +107,5 @@ function setImgSrcSecurityPolicy(policies) {
 		policies[imgsrcIndex] = policies[imgsrcIndex] + ` ${customBGServiceUrl.origin}`;
 	}
 }
-
 
 module.exports = CustomBackground;

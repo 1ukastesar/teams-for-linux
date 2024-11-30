@@ -32,9 +32,6 @@ contextBridge.exposeInMainWorld(
 		callDisconnected: () => {
 			ipcRenderer.invoke('call-disconnected');
 		},
-		selectSource: () => {
-			ipcRenderer.send('select-source');
-		},
 		userStatusChanged: (data) => {
 			ipcRenderer.invoke('user-status-changed', data);
 		},
@@ -49,6 +46,9 @@ contextBridge.exposeInMainWorld(
 		},
 		onDisableWakeLock: (callback) => {
 			ipcRenderer.on('disable-wakelock', callback);
+		},
+		selectSource: () => {
+			ipcRenderer.send('select-source');
 		},
 		onceSelectSource: (callback) => {
 			ipcRenderer.once('select-source', callback);

@@ -20,6 +20,10 @@
 					<li>Improving security on the streamSelector to work without the need of contentIsolation</li>
 					<li>Move from BaseView (deprecated), to WebContentsView in the streamSelector</li>
 					<li>Updating vsconfig to allow for electron and chrome debugging</li>
+					<li>Removing support for teams v1 version and most references</li>
+					<li>Remove deprecated appLogLevels config option</li>
+					<li>Making customBGServiceIgnoreMSDefaults config option deprecated</li>
+					<li>Removing contextIsolation and sandbox config options</li>
 				</ul>
 			</description>
 		</release>

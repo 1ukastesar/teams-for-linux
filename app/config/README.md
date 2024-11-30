@@ -19,13 +19,11 @@ Here is the list of available arguments and its usage:
 | appIconType                     | Type of tray icon to be used default/light/dark                                           | *default*, light, dark              |
 | appIdleTimeout                  | A numeric value in seconds as duration before app considers the system as idle             | 300                   |
 | appIdleTimeoutCheckInterval     | A numeric value in seconds as poll interval to check if the appIdleTimeout is reached      | 10                    |
-| appLogLevels  **deprecated - use logLevels** | Comma separated list of log levels (error,warn,info,debug)                                | error,warn            |
 | appTitle                        | A text to be suffixed with page title                                                    | Microsoft Teams       |
 | authServerWhitelist             | Set auth-server-whitelist value (string)                                                           | *                |
 | awayOnSystemIdle                | Boolean to set the user status as away when system goes idle                                        | false               |
 | chromeUserAgent                 | Google Chrome User Agent                                                                 | Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36                |
 | class							  | A custom value for the WM_CLASS property                                                  |                 |
-| contextIsolation 	 **forced to true - please remove**  | Use context isolation in the renderer process (disabling this will break some functionality) | false               |
 | customBGServiceBaseUrl          | Base URL of the server which provides custom background images                            | http://localhost                |
 | customBGServiceIgnoreMSDefaults **removed functionality - please remove**| A boolean flag indicates whether to ignore Microsoft provided images or not                       | false               |
 | customBGServiceConfigFetchInterval | A numeric value in seconds as poll interval to download background service config download | 0                |
@@ -60,10 +58,8 @@ Here is the list of available arguments and its usage:
 | minimized                       | Boolean to start the application minimized                                                          | false               |
 | notificationMethod | Notification method to be used by the application (`web`/`electron`) | *web*, electron |
 | ntlmV2enabled                   | Set enable-ntlm-v2 value                                                                 | 'true'                |
-| optInTeamsV2                    | Boolean to opt in to use Teams V2                                                                   | false               |
 | partition                       | BrowserWindow webpreferences partition                                                    | persist:teams-4-linux                |
 | proxyServer                     | Proxy Server with format address:port (string)                                                  | null                |
-| sandbox			**forced to true - please remove**  | Sandbox for the renderer process  (disabling this will break functionality)                                                | false               |
 | screenLockInhibitionMethod      | Screen lock inhibition method to be used (`Electron`/`WakeLockSentinel`)                      | *Electron*, WakeLockSentinel                |
 | spellCheckerLanguages           | Array of languages to use with Electron's spell checker                    | []                 |
 | ssoBasicAuthUser           | Login that will be sent for basic_auth SSO login. (string) |                  |
@@ -146,19 +142,7 @@ For apache2, `/etc/apache2/apache2.conf` may need to have an entry like this.
 ### Configuring list of images
 
 1. List of images are to be stored in `<customBGServiceBaseUrl>/config.json`.
-2. In Teams V1, it would look like this:
-```json
-[
-	{
-		"filetype": "jpg",
-		"id": "Custom_bg01",
-		"name": "Custom bg",
-		"src": "/<path-to-image>",
-		"thumb_src": "/<path-to-thumb-image>"
-	}
-]
-```
-3. In Teams V2, it would look like this:
+1. In Teams V2, it would look like this:
 ```json
 {
 	"videoBackgroundImages": [

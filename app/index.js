@@ -1,4 +1,4 @@
-const { app, dialog, ipcMain, desktopCapturer, globalShortcut, systemPreferences, powerMonitor, Notification, nativeImage } = require('electron');
+const { app, dialog, ipcMain, desktopCapturer, globalShortcut, systemPreferences, powerMonitor, Notification, nativeImage, shell } = require('electron');
 const path = require('path');
 const CustomBackground = require('./customBackground');
 const os = require('os');
@@ -325,7 +325,9 @@ async function requestMediaAccess() {
 		const status = await
 			systemPreferences.askForMediaAccess(permission)
 				.catch(err => {
-					console.error(`Error while requesting access for "${permission}": ${err}`); });
+					console.error(`Error while requesting access for "${permission}": ${err}`); 
+					shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Camera')
+				});
 		console.debug(`mac permission ${permission} asked current status ${status}`);
 	});
 }

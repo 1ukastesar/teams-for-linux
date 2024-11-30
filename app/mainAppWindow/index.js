@@ -110,22 +110,20 @@ function applyAppConfiguration(config, window) {
 }
 
 function handleTeamsV2OptIn(config) {
-	if (config.optInTeamsV2) {
-		setConfigUrlTeamsV2(config);
-		window.webContents.executeJavaScript('localStorage.getItem("tmp.isOptedIntoT2Web");', true)
-			.then(result => {
-				if ((result == null) || !result) {
-					window.webContents.executeJavaScript('localStorage.setItem("tmp.isOptedIntoT2Web", true);', true)
-						.then(window.reload())
-						.catch(err => {
-							console.debug('could not set localStorage variable', err);
-						});
-				}
-			})
-			.catch(err => {
-				console.debug('could not read localStorage variable', err);
-			});
-	}
+	setConfigUrlTeamsV2(config);
+	window.webContents.executeJavaScript('localStorage.getItem("tmp.isOptedIntoT2Web");', true)
+		.then(result => {
+			if ((result == null) || !result) {
+				window.webContents.executeJavaScript('localStorage.setItem("tmp.isOptedIntoT2Web", true);', true)
+					.then(window.reload())
+					.catch(err => {
+						console.debug('could not set localStorage variable', err);
+					});
+			}
+		})
+		.catch(err => {
+			console.debug('could not read localStorage variable', err);
+		});
 }
 
 function setConfigUrlTeamsV2(config) {
@@ -203,7 +201,6 @@ function restoreWindow() {
 }
 
 function processArgs(args) {
-	const v1msTeams = /^msteams:\/l\/(?:meetup-join|channel)/g;
 	const v2msTeams = /^msteams:\/\/teams\.microsoft\.com\/l\/(?:meetup-join|channel)/g;
 	console.debug('processArgs:', args);
 	for (const arg of args) {
@@ -212,11 +209,6 @@ function processArgs(args) {
 			console.debug('A url argument received with https protocol');
 			window.show();
 			return arg;
-		} 
-		if (v1msTeams.test(arg)) {
-			console.debug('A url argument received with msteams v1 protocol');
-			window.show();
-			return config.url + arg.substring(8, arg.length);
 		} 
 		if (v2msTeams.test(arg)) {
 			console.debug('A url argument received with msteams v2 protocol');

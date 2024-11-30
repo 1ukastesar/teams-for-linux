@@ -11,6 +11,15 @@ contextBridge.exposeInMainWorld(
 		getConfig: () => {
 			return ipcRenderer.invoke('get-config');
 		},
+		selectSource: () => {
+			ipcRenderer.send('select-source');
+		},
+		onceSelectSource: (callback) => {
+			ipcRenderer.once('select-source', callback);
+		},
+		onSystemThemeChanged: (callback) => {
+			ipcRenderer.on('system-theme-changed', callback);
+		},
 	},
 );
 
@@ -23,17 +32,18 @@ window.addEventListener('DOMContentLoaded', () => {
 		emulatePlatform();
 		disableAutogain();
 		setEventHandlers();
+		setupChromeAPI();
 		reactHandler = new ReactHandler();
 		console.log(reactHandler.getTeams2ClientPreferences());
 	}).catch(error => {
 		console.error("Error getting config:", error);
 	});
 
-	Object.defineProperty(navigator.serviceWorker, 'register', {
-		value: () => {
-			return Promise.reject();
-		}
-	});
+	// Object.defineProperty(navigator.serviceWorker, 'register', {
+	// 	value: () => {
+	// 		return Promise.reject();
+	// 	}
+	// });
 })
 
 //mutationlogic
@@ -207,12 +217,71 @@ function setEventHandlers() {
 }
 
 
+//chromeAPI
+let _getDisplayMedia;
+
+function setupChromeAPI() {
+	if (process.env.XDG_SESSION_TYPE === 'wayland') {
+		_getDisplayMedia = MediaDevices.prototype.getDisplayMedia;
+		MediaDevices.prototype.getDisplayMedia = customGetDisplayMediaWayland;
+	} else {
+		MediaDevices.prototype.getDisplayMedia = customGetDisplayMediaX11;
+	}
+}
+
+async function customGetDisplayMediaWayland(...args) {
+	args[0].audio = false;
+	args[0].systemAudio = 'exclude';
+
+	return await _getDisplayMedia.apply(navigator.mediaDevices, args);
+}
+
+function customGetDisplayMediaX11() {
+	return new Promise((resolve, reject) => {
+		console.info('Requesting screen sharing');
+		// Request main process to allow access to screen sharing
+		window.api.onceSelectSource((_event, source) => {
+			console.info('onceSelectSource', source);
+			startStreaming({ source, resolve, reject });
+		});
+		window.api.selectSource();
+	});
+}
+
+function startStreaming(properties) {
+	console.info('Starting streaming', properties);
+	if (properties.source) {
+		navigator.mediaDevices.getUserMedia({
+			audio: false,
+			video: {
+				mandatory: {
+					chromeMediaSource: 'desktop',
+					chromeMediaSourceId: properties.source.id,
+					minWidth: properties.source.screen.width,
+					maxWidth: properties.source.screen.width,
+					minHeight: properties.source.screen.height,
+					maxHeight: properties.source.screen.height
+				}
+			}
+		}).then(stream => {
+			properties.resolve(stream);
+		}).catch(e => {
+			console.error(e.message);
+			properties.reject(e.message);
+		});
+	} else {
+		properties.reject('Access denied');
+	}
+}
+
+
 //reactHandler are helper functions to get data from the react app MS manages
 class ReactHandler {
 
 	constructor() {
-		this._getThemePreferences().followOsTheme = config.followSystemTheme;
-		window.api.onSystemThemeChanged(this._applyUserTheme);
+		// this._getThemePreferences().followOsTheme = config.followSystemTheme;
+		ipcRenderer.on('system-theme-changed', this._applyUserTheme);
+		// window.api.onSystemThemeChanged(this._applyUserTheme);
 	}
 
 	_applyUserTheme(_event, ...args) {
@@ -246,7 +315,6 @@ class ReactHandler {
 //TODO: Add the following to the file and contextBridge:
 //activityManager
 //activityHub
-//chromeAPI
 //settings
 //shortcuts
 //trayIconChooser
