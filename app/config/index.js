@@ -232,7 +232,7 @@ function extractYargConfig(configObject, appVersion) {
 				default: {
 					"transports": {
 						"console": {
-							"level": "info"
+							"level": "debug"
 						},
 						"file": {
 							"level": false

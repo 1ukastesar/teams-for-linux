@@ -128,6 +128,7 @@ class Menus {
 	}
 
 	saveSettings() {
+		console.debug('Saving settings');
 		ipcMain.once('get-teams-settings', saveSettingsInternal);
 		this.window.webContents.send('get-teams-settings');
 	}

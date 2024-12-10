@@ -33,17 +33,17 @@ window.addEventListener('DOMContentLoaded', () => {
 		disableAutogain();
 		setEventHandlers();
 		setupChromeAPI();
-		reactHandler = new ReactHandler();
-		console.log(reactHandler.getTeams2ClientPreferences());
+		// getTeams2ClientPreferences().theme.followOsTheme = config.followSystemTheme; // TODO: WAIT UNTIL LOADED
+		// console.log(getTeams2ClientPreferences());
 	}).catch(error => {
 		console.error("Error getting config:", error);
 	});
 
-	// Object.defineProperty(navigator.serviceWorker, 'register', {
-	// 	value: () => {
-	// 		return Promise.reject();
-	// 	}
-	// });
+	Object.defineProperty(navigator.serviceWorker, 'register', {
+		value: () => {
+			return Promise.reject();
+		}
+	});
 })
 
 //mutationlogic
@@ -214,10 +214,13 @@ async function disableWakeLock() {
 function setEventHandlers() {
 	ipcRenderer.on('enable-wakelock', enableWakeLock);
 	ipcRenderer.on('disable-wakelock', disableWakeLock);
+	ipcRenderer.on('get-teams-settings', getTeamSettings);
+	ipcRenderer.on('set-teams-settings', setTeamSettings);
+	ipcRenderer.on('system-theme-changed', _applyUserTheme);
 }
 
 
-//chromeAPI
+//chromeAPI -> this needs to be execute javascript
 let _getDisplayMedia;
 
 function setupChromeAPI() {
@@ -274,48 +277,54 @@ function startStreaming(properties) {
 	}
 }
 
+//settings
+async function getTeamSettings(event) {
+	console.debug('Getting teams settings');
+	const clientPreferences = getTeams2ClientPreferences();
+
+	const settings = {
+		theme: clientPreferences.theme.userTheme,
+		chatDensity: clientPreferences.density.chatDensity,
+	};
+	event.sender.send('get-teams-settings', settings);
+}
+
+async function setTeamSettings(event, ...args) {
+	console.debug('Setting teams settings');
+	const clientPreferences = getTeams2ClientPreferences();
+	clientPreferences.theme.userTheme = args[0].theme;
+	clientPreferences.density.chatDensity = args[0].chatDensity;
+	event.sender.send('set-teams-settings', true);
+}
 
 //reactHandler are helper functions to get data from the react app MS manages
-class ReactHandler {
 
-	constructor() {
-		// this._getThemePreferences().followOsTheme = config.followSystemTheme;
-		ipcRenderer.on('system-theme-changed', this._applyUserTheme);
-		// window.api.onSystemThemeChanged(this._applyUserTheme);
-	}
+function _applyUserTheme(_event, ...args) {//make this execute javascript???
+	const theme = args[0] ? 'dark' : 'default';
+	getTeams2ClientPreferences().theme.userTheme = theme;
+	console.debug('Theme changed to', theme);
+}
 
-	_applyUserTheme(_event, ...args) {
-		const theme = args[0] ? 'dark' : 'default';
-		this._getThemePreferences().userTheme = theme;
-		console.debug('Theme changed to', theme);
-	}
+function _getTeams2CoreServices() { //make this execute javascript???
+	const reactElement = document.getElementById('app');
+	const internalRoot = reactElement?._reactRootContainer?._internalRoot || reactElement?._reactRootContainer;
+	return internalRoot?.current?.updateQueue?.baseState?.element?.props?.coreServices;
+}
 
-	_getThemePreferences() {
-		return this.getTeams2ClientPreferences().theme;
-	}
+function getTeams2IdleTracker() {
+	const teams2CoreServices = _getTeams2CoreServices();
+	return teams2CoreServices?.clientState?._idleTracker;
+}
 
-    getTeams2IdleTracker() {
-        const teams2CoreServices = this._getTeams2CoreServices();
-        return teams2CoreServices?.clientState?._idleTracker;
-    }
-
-    getTeams2ClientPreferences() {
-        const teams2CoreServices = this._getTeams2CoreServices();
-        return teams2CoreServices?.clientPreferences?.clientPreferences;
-    }
-
-    _getTeams2CoreServices() {
-        const reactElement = document.getElementById('app');
-        const internalRoot = reactElement?._reactRootContainer?._internalRoot || reactElement?._reactRootContainer;
-        return internalRoot?.current?.updateQueue?.baseState?.element?.props?.coreServices;
-    }
+function getTeams2ClientPreferences() {
+	const teams2CoreServices = _getTeams2CoreServices();
+	return teams2CoreServices?.clientPreferences?.clientPreferences;
 }
 //document.getElementById('app')._reactRootContainer.current.updateQueue.baseState.element.props.coreServices
 
 //TODO: Add the following to the file and contextBridge:
 //activityManager
 //activityHub
-//settings
 //shortcuts
 //trayIconChooser
 //trayIconRenderer (if enabled)
