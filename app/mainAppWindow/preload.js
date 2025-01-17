@@ -1,10 +1,11 @@
 const {
 	contextBridge,
-	ipcRenderer
+	ipcRenderer,
+	webFrame,
 } = require("electron");
 
+
 let config = {};
-let reactHandler;
 
 contextBridge.exposeInMainWorld(
 	"api", {
@@ -33,6 +34,10 @@ window.addEventListener('DOMContentLoaded', () => {
 		disableAutogain();
 		setEventHandlers();
 		setupChromeAPI();
+		initialiseZoom();
+		setupShortcutKeys();
+		trayIconConfiguration();
+		startActivityManager();
 		// getTeams2ClientPreferences().theme.followOsTheme = config.followSystemTheme; // TODO: WAIT UNTIL LOADED
 		// console.log(getTeams2ClientPreferences());
 	}).catch(error => {
@@ -298,7 +303,6 @@ async function setTeamSettings(event, ...args) {
 }
 
 //reactHandler are helper functions to get data from the react app MS manages
-
 function _applyUserTheme(_event, ...args) {//make this execute javascript???
 	const theme = args[0] ? 'dark' : 'default';
 	getTeams2ClientPreferences().theme.userTheme = theme;
@@ -323,9 +327,408 @@ function getTeams2ClientPreferences() {
 //document.getElementById('app')._reactRootContainer.current.updateQueue.baseState.element.props.coreServices
 
 //TODO: Add the following to the file and contextBridge:
-//activityManager
-//activityHub
-//shortcuts
-//trayIconChooser
+
+////activityHub
+const eventHandlers = [];
+
+// Supported events
+const supportedEvents = [
+	'incoming-call-created',
+	'incoming-call-connecting',
+	'incoming-call-disconnecting',
+	'call-connected',
+	'call-disconnected',
+	'activities-count-updated',
+	'meeting-started',
+	'my-status-changed'
+];
+
+function setMachineState(state) {
+	const teams2IdleTracker = getTeams2IdleTracker();
+	if (teams2IdleTracker) {
+		try {
+			console.debug(`setMachineState teams2 state=${state}`);
+			if (state === 1) {
+				teams2IdleTracker.handleMonitoredWindowEvent();
+			} else {
+				teams2IdleTracker.transitionToIdle();
+			}
+		} catch (e) {
+			console.error('Failed to set teams2 Machine State', e);
+		}
+	}
+}
+
+function setUserStatus(status) {
+	const teams2IdleTracker = getTeams2IdleTracker();
+	if (teams2IdleTracker) {
+		try {
+			console.debug(`setUserStatus teams2 status=${status}`);
+			if (status === 1) {
+				teams2IdleTracker.handleMonitoredWindowEvent();
+			} else {
+				teams2IdleTracker.transitionToIdle();
+			}
+		} catch (e) {
+			console.error('Failed to set teams2 User Status', e);
+		}
+	}
+}
+
+function refreshAppState(controller, state) {
+	const self = controller.appStateService;
+	controller.appStateService.refreshAppState.apply(self, [() => {
+		self.inactiveStartTime = null;
+		self.setMachineState(state);
+		self.setActive(state == 1 && (self.current == 4 || self.current == 5) ? 3 : self.current);
+	}, '', null, null]);
+}
+
+function isSupportedEvent(event) {
+	return supportedEvents.some(e => {
+		return e === event;
+	});
+}
+
+function isFunction(func) {
+	return typeof (func) === 'function';
+}
+
+function addEventHandler(event, handler) {
+	let handle;
+	if (isSupportedEvent(event) && isFunction(handler)) {
+		handle = Math.ceil(Math.random() * 100000);
+		eventHandlers.push({
+			event: event,
+			handle: handle,
+			handler: handler
+		});
+	}
+	return handle;
+}
+
+////activityManager
+
+function startActivityManager() {
+	addEventHandler('activities-count-updated', updateActivityCountHandler());
+	addEventHandler('incoming-call-created', incomingCallCreatedHandler());
+	addEventHandler('incoming-call-connecting', incomingCallConnectingHandler());
+	addEventHandler('incoming-call-disconnecting', incomingCallDisconnectingHandler());
+	addEventHandler('call-connected', callConnectedHandler());
+	addEventHandler('call-disconnected', callDisconnectedHandler());
+	addEventHandler('meeting-started', meetingStartNotifyHandler(self));
+	addEventHandler('my-status-changed', myStatusChangedHandler());
+	watchSystemIdleState();
+}
+
+function watchSystemIdleState() {
+	window.api.getSystemIdleState().then((state) => {
+		let timeOut;
+		if (config.awayOnSystemIdle) {
+			timeOut = setStatusAwayWhenScreenLocked(state);
+		} else {
+			timeOut = keepStatusAvailableWhenScreenLocked(state);
+		}
+		setTimeout(() => watchSystemIdleState(), timeOut);
+	});
+}
+    
+function setStatusAwayWhenScreenLocked(state) {
+	setMachineState(state.system === 'active' ? 1 : 2);
+	const timeOut = (state.system === 'active' ? config.appIdleTimeoutCheckInterval : config.appActiveCheckInterval) * 1000;
+
+	if (state.system === 'active' && state.userIdle === 1) {
+		setUserStatus(1);
+	} else if (state.system !== 'active' && state.userCurrent === 1) {
+		setUserStatus(3);
+	}
+	return timeOut;
+}
+
+function keepStatusAvailableWhenScreenLocked(state) {
+	if ((state.system === 'active') || (state.system === 'locked')) {
+		setMachineState(1);
+		return config.appIdleTimeoutCheckInterval * 1000;
+	}
+	setMachineState(2);
+	return config.appActiveCheckInterval * 1000;
+}
+
+function updateActivityCountHandler() {
+	return async (data) => {
+		const event = new CustomEvent('unread-count', { detail: { number: data.count } });
+		window.dispatchEvent(event);
+	};
+}
+
+function incomingCallCreatedHandler() {
+	return async (data) => {
+		window.api.incomingCallCreated(data);
+	};
+}
+
+function incomingCallConnectingHandler() {
+	return async () => {
+		window.api.incomingCallConnecting();
+	};
+}
+
+function incomingCallDisconnectingHandler() {
+	return async () => {
+		window.api.incomingCallDisconnecting();
+	};
+}
+
+function callConnectedHandler() {
+	return async () => {
+		window.api.callConnected();
+	};
+}
+
+function callDisconnectedHandler() {
+	return async () => {
+		window.api.callDisconnected();
+	};
+}
+
+// eslint-disable-next-line no-unused-vars
+function meetingStartNotifyHandler(self) {
+	if (!self.config.disableMeetingNotifications) {
+		return async (meeting) => {
+			new window.Notification('Meeting has started', {
+				type: 'meeting-started', body: meeting.title
+			});
+		};
+	}
+	return null;
+}
+
+function myStatusChangedHandler() {
+	return async (event) => {
+		window.api.userStatusChanged(event.data);
+	};
+}
+
+
+////shortcuts
+const os = require('os');
+const isMac = os.platform() === 'darwin';
+
+function setupShortcutKeys() {
+	whenWindowReady(addEventListeners);
+}
+
+function whenWindowReady(callback) {
+	if (window) {
+		callback();
+	} else {
+		setTimeout(() => whenWindowReady(callback), 1000);
+	}
+}
+
+function addEventListeners() {
+	window.addEventListener('keydown', keyDownEventHandler, false);
+	window.addEventListener('wheel', wheelEventHandler, {passive: false});
+	whenIframeReady((iframe) => {
+		iframe.contentDocument.addEventListener('keydown', keyDownEventHandler, false);
+		iframe.contentDocument.addEventListener('wheel', wheelEventHandler, {passive: false});
+	});
+}
+
+function whenIframeReady(callback) {
+	const iframe = window.document.getElementsByTagName('iframe')[0];
+	if (iframe) {
+		callback(iframe);
+	} else {
+		setTimeout(() => whenIframeReady(callback), 1000);
+	}
+}
+
+const KEY_MAPS = {
+	'CTRL_+': () => increaseZoomLevel(),
+	'CTRL_=': () => increaseZoomLevel(),
+	'CTRL_-': () => decreaseZoomLevel(),
+	'CTRL__': () => decreaseZoomLevel(),
+	'CTRL_0': () => resetZoomLevel(),
+	// Alt (Option) Left / Right is used to jump words in Mac, so diabling the history navigation for Mac here
+	...(!isMac ? 
+		{ 
+			'ALT_ArrowLeft': () => window.history.back(),
+			'ALT_ArrowRight': () => window.history.forward()
+		} 
+		: {}
+		)
+};
+
+function keyDownEventHandler(event) {
+	const keyName = event.key;
+	if (keyName === 'Control' || keyName === 'Alt') {
+		return;
+	}
+
+	fireEvent(event, keyName);
+}
+
+function wheelEventHandler(event) {
+	if (event.ctrlKey) {
+		event.preventDefault();
+		if (event.deltaY > 0) {
+			decreaseZoomLevel();
+		} else if (event.deltaY < 0) {
+			increaseZoomLevel();
+		}
+	}
+}
+
+function getKeyName(event, keyName) {
+	return `${event.ctrlKey ? 'CTRL_' : ''}${event.altKey ? 'ALT_' : ''}${keyName}`;
+}
+
+function fireEvent(event, keyName) {
+	const handler = KEY_MAPS[getKeyName(event, keyName)];
+	if (typeof (handler) === 'function') {
+		event.preventDefault();
+		handler();
+	}
+}
+
+
 //trayIconRenderer (if enabled)
-//zoom
+const { nativeImage } = require('electron');
+const path = require('path');
+const iconFolder = path.join(__dirname, '../..', 'assets/icons');
+
+const icons = {
+	icon_default_16: 'icon-16x16.png',
+	icon_default_96: 'icon-96x96.png',
+	icon_dark_16: 'icon-monochrome-dark-16x16.png',
+	icon_dark_96: 'icon-monochrome-dark-96x96.png',
+	icon_light_16: 'icon-monochrome-light-16x16.png',
+	icon_light_96: 'icon-monochrome-light-96x96.png'
+};
+
+let baseIcon;
+let iconSize;
+
+function trayIconConfiguration() {
+	if (!config.trayIconEnabled) {
+		return;
+	}
+	baseIcon = nativeImage.createFromPath(getIconFile());
+	iconSize = baseIcon.getSize();
+	window.addEventListener('unread-count', updateActivityCount.bind(this));
+}
+
+function getIconFile() {
+	if (config.appIcon.trim() !== '') {
+		return config.appIcon;
+	}
+	return path.join(iconFolder, icons[`icon_${config.appIconType}_${isMac ? 16 : 96}`]);
+}
+
+function updateActivityCount(event) {
+	const count = event.detail.number;
+	renderTrayIcon(count).then(icon => {
+		console.debug('sending tray-update');
+		const flash = count > 0 && !config.disableNotificationWindowFlash;
+		window.api.updateTrayIcon(
+			icon,
+			flash
+		);
+	});
+	window.api.setBadgeCount(count);
+}
+
+function renderTrayIcon(newActivityCount) {
+	return new Promise(resolve => {
+		const canvas = document.createElement('canvas');
+		canvas.height = 140;
+		canvas.width = 140;
+		const image = new Image();
+		image.src = baseIcon.toDataURL('image/png');
+		image.onload = () => _addRedCircleNotification(canvas, image, newActivityCount, resolve);
+	});
+}
+
+function _addRedCircleNotification(canvas, image, newActivityCount, resolve) {
+	const ctx = canvas.getContext('2d');
+
+	ctx.drawImage(image, 0, 0, 140, 140);
+	if (newActivityCount > 0) {
+		ctx.fillStyle = 'red';
+		ctx.beginPath();
+		ctx.ellipse(100, 90, 40, 40, 40, 0, 2 * Math.PI);
+		ctx.fill();
+		ctx.textAlign = 'center';
+		ctx.fillStyle = 'white';
+
+		ctx.font = 'bold 70px "Segoe UI","Helvetica Neue",Helvetica,Arial,sans-serif';
+		if (newActivityCount > 9) {
+			ctx.fillText('+', 100, 110);
+		} else {
+			ctx.fillText(newActivityCount.toString(), 100, 110);
+		}
+	}
+	const resizedCanvas = _getResizeCanvasWithOriginalIconSize(canvas);
+	resolve(resizedCanvas.toDataURL());
+}
+
+function _getResizeCanvasWithOriginalIconSize (canvas) {
+	const resizedCanvas = document.createElement('canvas'),
+		rctx = resizedCanvas.getContext('2d');
+
+	resizedCanvas.width = iconSize.width;
+	resizedCanvas.height = iconSize.height;
+
+	const scaleFactorX = iconSize.width / canvas.width,
+		scaleFactorY = iconSize.height / canvas.height;
+	rctx.scale(scaleFactorX, scaleFactorY);
+	rctx.drawImage(canvas, 0, 0);
+
+	return resizedCanvas;
+}
+
+////zoom
+const zoomFactor = 0.25; //zoomFactor can be configurable
+const zoomMin = -7.5; //-7.5 * 20% = -150% or 50% of original
+const zoomMax = 7.5; // 7.5 * 20% = +200% or 300% of original
+const zoomOffsets = {
+	'+': 1,
+	'-': -1,
+	'0': 0
+};
+
+function initialiseZoom() {
+	window.api.getZoomLevel(config.partition).then(zoomLevel => {
+		webFrame.setZoomLevel(zoomLevel);
+	});
+}
+
+function resetZoomLevel() {
+	setNextZoomLevel('0', config);
+}
+
+function increaseZoomLevel() {
+	setNextZoomLevel('+', config);
+}
+
+function decreaseZoomLevel() {
+	setNextZoomLevel('-', config);
+}
+
+function setNextZoomLevel(keyName, config) {
+	const zoomOffset = zoomOffsets[keyName];
+	let zoomLevel = webFrame.getZoomLevel();
+	console.debug(`Current zoom level: ${zoomLevel}`);
+	if (typeof (zoomOffset) !== 'number') {
+		return;
+	}
+
+	zoomLevel = zoomOffset === 0 ? 0 : zoomLevel + zoomOffset * zoomFactor;
+	if (zoomLevel < zoomMin || zoomLevel > zoomMax) return;
+	webFrame.setZoomLevel(zoomLevel);
+	window.api.saveZoomLevel({
+		partition: config.partition,
+		zoomLevel: webFrame.getZoomLevel()
+	});
+}

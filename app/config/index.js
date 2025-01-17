@@ -211,7 +211,7 @@ function extractYargConfig(configObject, appVersion) {
 			frame: {
 				default: true,
 				describe: 'Specify false to create a Frameless Window. Default is true',
-				type: 'string'
+				type: 'boolean'
 			},
 			incomingCallCommand: {
 				default: null,

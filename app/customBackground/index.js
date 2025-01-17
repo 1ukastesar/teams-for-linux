@@ -25,7 +25,7 @@ class CustomBackground {
             customBGUrl = new URL('', this.config.customBGServiceBaseUrl);
         }
         catch (err) {
-            console.warning(`Failed to load custom background service configuration. ${err}. Setting Background service URL to http://localhost `);
+            console.warn(`Failed to load custom background service configuration. ${err}. Setting Background service URL to http://localhost `);
             customBGUrl = new URL('', 'http://localhost');
         }
     
@@ -92,6 +92,41 @@ class CustomBackground {
         return customBGServiceUrl?.protocol === 'http:';
     }
 
+    onCustomBGServiceConfigDownloadFailure(err) {
+        const dlpath = path.join(this.app.getPath('userData'), 'custom_bg_remote.json');
+        console.error(`Failed to fetch custom background remote configuration. ${err.message}`);
+        try {
+            fs.writeFileSync(dlpath, JSON.stringify([]));
+        }
+        catch (err) {
+            console.error(`Failed to save custom background default configuration at '${dlpath}'. ${err.message}`);
+        }
+    }
+    
+    onCustomBGServiceConfigDownloadSuccess(data) {
+        const downloadPath = path.join(this.app.getPath('userData'), 'custom_bg_remote.json');
+        try {
+            const configJSON = JSON.parse(data);
+            for (let config of configJSON) {
+                setPath(config);
+            }
+            fs.writeFileSync(downloadPath, JSON.stringify(configJSON));
+            console.debug(`Custom background service remote configuration stored at '${downloadPath}'`);
+        }
+        catch (err) {
+            console.warn(`Fetched custom background remote configuration but failed to save at '${downloadPath}'. ${err.message}`);
+        }
+    }
+}
+
+function setPath(cfg) {
+    if (!cfg.src.startsWith('/teams-for-linux/custom-bg/')) {
+        cfg.src = httpHelper.joinURLs('/teams-for-linux/custom-bg/', cfg.src);
+    }
+
+    if (!cfg.thumb_src.startsWith('/teams-for-linux/custom-bg/')) {
+        cfg.thumb_src = httpHelper.joinURLs('/teams-for-linux/custom-bg/', cfg.thumb_src);
+    }
 }
 
 function setConnectSrcSecurityPolicy(policies) {
