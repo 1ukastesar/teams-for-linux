@@ -2,8 +2,6 @@
 
 name: Sync upstream
 
-env: 
-  UPSTREAM_NAME: upstream
 on:
   schedule:
     - cron:  '0 0 * * *'
@@ -14,10 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.ACTIONS_PAT }}
       - name: Rebase onto upstream
         run: |
-          git config --global user.name ${{ vars.USER_NAME }}
-          git config --global user.email "$GITHUB_REPOSITORY_OWNER@users.noreply.github.com"
+          git config --global user.name ${{ secrets.REPOSITORY_OWNER_NAME }}
+          git config --global user.email "${GITHUB_REPOSITORY_OWNER}@users.noreply.github.com"
 
           # "git checkout main" is unnecessary, already here by default
           git pull --unshallow  # this option is very important, you would get
@@ -26,8 +26,21 @@ jobs:
                                 # to fetch all git depth right from the start)
 
 
-          git remote add $UPSTREAM_NAME ${{ vars.UPSTREAM_URL }}
-          git fetch $UPSTREAM_NAME
+          git remote add ${{ vars.UPSTREAM_NAME }} ${{ vars.UPSTREAM_URL }}
 
-          git rebase $UPSTREAM_NAME/main
+          git fetch ${{ vars.UPSTREAM_NAME }}
+          git rebase ${{ vars.UPSTREAM_NAME }}/main
+
+          # This authenticates with secrets.ACTIONS_PAT, because it was
+          # used with the checkout action
           git push --force-with-lease --force-if-includes origin main
+
+      - name: Trigger build
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: 'publish-trigger',
+            });
