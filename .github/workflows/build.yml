@@ -3,7 +3,12 @@ name: Build & Release
 env:
   GH_TOKEN: ${{ SECRETS.GITHUB_TOKEN }}
 
-on: push
+on:
+  push:
+    branches:
+      - main
+  repository_dispatch:
+    types: [publish-trigger]
 
 defaults:
   run:
@@ -29,93 +34,23 @@ jobs:
         run: npm run generate-release-info
 
       - name: Release
-        if: contains(github.ref, 'main')
-        run: npm run dist:linux:x64 -- --publish always
+        run: npm run dist:linux:x64 -- --publish never
 
-  linux_arm64:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Install Node.js and NPM
-        uses: actions/setup-node@v4
+      - name: Upload artifact to custom apt repo
+        uses: appleboy/scp-action@v0.1.7
         with:
-          node-version: 22
+          host: ${{ secrets.APT_REPO_HOST }}
+          username: ${{ secrets.APT_REPO_USER }}
+          key: ${{ secrets.APT_REPO_KEY }}
+          port: ${{ secrets.APT_REPO_PORT }}
+          source: "dist/*.deb"
+          target: ${{ secrets.APT_REPO_PATH }}/${{ vars.APT_REPO_POOL_PATH }}
 
-      - name: Build
-        run: npm ci
-
-      - name: Validate Release Notes
-        run: npm run generate-release-info
-
-      - name: Release
-        if: contains(github.ref, 'main')
-        run: npm run dist:linux:arm64 -- --publish always
-
-  linux_arm:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Install Node.js and NPM
-        uses: actions/setup-node@v4
+      - name: Update repo after upload
+        uses: appleboy/ssh-action@v1
         with:
-          node-version: 22
-
-      - name: Build
-        run: npm ci
-
-      - name: Validate Release Notes
-        run: npm run generate-release-info
-
-      - name: Release
-        if: contains(github.ref, 'main')
-        run: npm run dist:linux:arm -- --publish always
-
-  dmg:
-    runs-on: macos-latest
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Install Node.js and NPM
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Build
-        run: npm ci
-
-      - name: Validate Release Notes
-        run: npm run generate-release-info
-
-      - name: Release
-        if: contains(github.ref, 'main')
-        run: npm run dist:mac:x64 -- --publish always
-
-  exe:
-    runs-on: windows-latest
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-
-      - name: Install Node.js and NPM
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Build
-        run: npm ci
-
-      - name: Validate Release Notes
-        run: npm run generate-release-info
-
-      - name: Release
-        if: contains(github.ref, 'main')
-        run: npm run dist:windows -- --publish always
+          host: ${{ secrets.APT_REPO_HOST }}
+          username: ${{ secrets.APT_REPO_USER }}
+          key: ${{ secrets.APT_REPO_KEY }}
+          port: ${{ secrets.APT_REPO_PORT }}
+          script: ${{ secrets.APT_REPO_PATH }}/${{ vars.APT_REPO_UPDATE_SCRIPT }}
