@@ -29,7 +29,7 @@ jobs:
         if: contains(github.ref, 'main')
         run: npm run dist:linux:x64 --
 
-      - name: Upload .deb to apt repo
+      - name: Upload artifact to custom apt repo
         if: contains(github.ref, 'main')
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -38,4 +38,14 @@ jobs:
           key: ${{ secrets.APT_REPO_KEY }}
           port: ${{ secrets.APT_REPO_PORT }}
           source: "dist/*.deb"
-          target: ${{ secrets.APT_REPO_PATH }}
+          target: ${{ secrets.APT_REPO_PATH }}/${{ vars.APT_REPO_POOL_PATH }}
+
+      - name: Update repo after upload
+        if: contains(github.ref, 'main')
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.APT_REPO_HOST }}
+          username: ${{ secrets.APT_REPO_USER }}
+          key: ${{ secrets.APT_REPO_KEY }}
+          port: ${{ secrets.APT_REPO_PORT }}
+          script: ${{ secrets.APT_REPO_PATH }}/${{ vars.APT_REPO_UPDATE_SCRIPT }}
