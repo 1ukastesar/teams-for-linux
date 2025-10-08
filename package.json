@@ -100,7 +100,7 @@
       ],
       "publish": {
         "provider": "github",
-        "releaseType": "pre-release"
+        "releaseType": "prerelease"
       },
       "releaseInfo": {
         "releaseNotesFile": "release-info.json"
