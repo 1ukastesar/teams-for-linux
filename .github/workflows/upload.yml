@@ -2,19 +2,6 @@ name: Upload to APT repo
 
 on:
   workflow_call:
-    inputs:
-      artifact-name:
-        description: 'The name of the artifact to download'
-        required: true
-        type: string
-      apt-repo-pool-path:
-        description: 'APT repo pool path'
-        required: true
-        type: string
-      apt-repo-update-script:
-        description: 'APT repo update script'
-        required: true
-        type: string
     secrets:
       APT_REPO_HOST:
         required: true
@@ -31,11 +18,13 @@ jobs:
   upload:
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.artifact-name }}
           path: dist
+
+      - name: List downloaded files
+        run: ls -R dist
 
       - name: Upload artifact to custom apt repo
         uses: appleboy/scp-action@v0.1.7
@@ -44,8 +33,8 @@ jobs:
           username: ${{ secrets.APT_REPO_USER }}
           key: ${{ secrets.APT_REPO_KEY }}
           port: ${{ secrets.APT_REPO_PORT }}
-          source: "dist/*.deb"
-          target: ${{ secrets.APT_REPO_PATH }}/${{ inputs.apt-repo-pool-path }}
+          source: "dist/*/*.deb"
+          target: ${{ secrets.APT_REPO_PATH }}/${{ vars.APT_REPO_POOL_PATH }}
 
       - name: Update repo after upload
         uses: appleboy/ssh-action@v1
@@ -54,4 +43,4 @@ jobs:
           username: ${{ secrets.APT_REPO_USER }}
           key: ${{ secrets.APT_REPO_KEY }}
           port: ${{ secrets.APT_REPO_PORT }}
-          script: ${{ secrets.APT_REPO_PATH }}/${{ inputs.apt-repo-update-script }}
+          script: ${{ secrets.APT_REPO_PATH }}/${{ vars.APT_REPO_UPDATE_SCRIPT }}
