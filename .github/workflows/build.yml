@@ -32,22 +32,11 @@ jobs:
         if: contains(github.ref, 'main')
         run: npm run dist:linux:x64 -- --publish always
 
-      - name: Build for PR
-        if: "!contains(github.ref, 'main')"
-        run: npm run dist:linux:x64 -- --publish never
-
-      - name: Upload PR artifacts
-        if: "!contains(github.ref, 'main')"
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - name: Upload Debian package as artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: teams-for-linux-linux-x64
-          path: |
-            dist/*.deb
-            dist/*.rpm
-            dist/*.tar.gz
-            dist/*.AppImage
-          retention-days: 30
-          compression-level: 6
+          name: linux-deb-x64
+          path: dist/*_amd64.deb
 
   linux_arm64:
     runs-on: ubuntu-latest
@@ -71,22 +60,11 @@ jobs:
         if: contains(github.ref, 'main')
         run: npm run dist:linux:arm64 -- --publish always
 
-      - name: Build for PR
-        if: "!contains(github.ref, 'main')"
-        run: npm run dist:linux:arm64 -- --publish never
-
-      - name: Upload PR artifacts
-        if: "!contains(github.ref, 'main')"
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - name: Upload Debian package as artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: teams-for-linux-linux-arm64
-          path: |
-            dist/*.deb
-            dist/*.rpm
-            dist/*.tar.gz
-            dist/*.AppImage
-          retention-days: 30
-          compression-level: 6
+          name: linux-deb-arm64
+          path: dist/*_arm64.deb
 
   linux_arm:
     runs-on: ubuntu-latest
@@ -109,3 +87,14 @@ jobs:
       - name: Build for Release
         if: contains(github.ref, 'main')
         run: npm run dist:linux:arm -- --publish always
+
+      - name: Upload Debian package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb-arm
+          path: dist/*_armv7l.deb
+
+  apt_repo:
+    needs: [linux_x64, linux_arm64, linux_arm]
+    uses: ./.github/workflows/upload.yml
+    secrets: inherit
