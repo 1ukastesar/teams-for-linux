@@ -38,7 +38,7 @@
     "dist:mac:x64": "electron-builder --mac --x64",
     "dist:mac:arm64": "electron-builder --mac --arm64",
     "dist:windows": "electron-builder --windows --x64",
-    "dist:linux:x64": "electron-builder --x64 -l tar.gz deb rpm AppImage",
+    "dist:linux:x64": "electron-builder --x64 -l deb",
     "dist:linux:arm64": "electron-builder --arm64 -l tar.gz deb rpm AppImage",
     "dist:linux:arm": "electron-builder --armv7l -l tar.gz deb rpm AppImage",
     "release": "electron-builder"
