@@ -29,7 +29,10 @@ jobs:
           git remote add ${{ vars.UPSTREAM_NAME }} ${{ vars.UPSTREAM_URL }}
 
           git fetch ${{ vars.UPSTREAM_NAME }}
-          git rebase ${{ vars.UPSTREAM_NAME }}/main
+          git rebase ${{ vars.UPSTREAM_NAME }}/main || ( \
+          git rm .github/workflows/snap.yml && \
+          git rebase --continue -m "chore: disable building of snap packages" \
+          )
 
           # This authenticates with secrets.ACTIONS_PAT, because it was
           # used with the checkout action
