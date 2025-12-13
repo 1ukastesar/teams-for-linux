@@ -73,6 +73,15 @@ npm run dist:linux
 npm run pack
 ```
 
+To append a git revision to the package version (recommended for distinguishing builds), set the BUILD_NUMBER environment variable:
+
+```bash
+export BUILD_NUMBER=$(git rev-parse --short HEAD)
+npm run dist:linux
+```
+
+This will produce packages with versions like `2.6.18-f97ae6e` for Debian and release `f97ae6e` for RPM.
+
 ### Docker/Podman Build
 
 For consistent builds across environments:
