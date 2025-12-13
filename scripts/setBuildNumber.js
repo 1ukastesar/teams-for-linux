@@ -22,7 +22,8 @@ try {
   const builderArgs = process.argv.slice(2);
 
   // Run electron-builder with BUILD_NUMBER environment variable
-  const builderProcess = spawn("electron-builder", builderArgs, {
+  // Use npx to ensure electron-builder is found in node_modules
+  const builderProcess = spawn("npx", ["electron-builder", ...builderArgs], {
     stdio: "inherit",
     env: {
       ...process.env,
@@ -31,9 +32,19 @@ try {
   });
 
   builderProcess.on("close", (code) => {
-    process.exit(code);
+    // Exit with the same code as electron-builder
+    // Default to 1 if code is null/undefined
+    process.exit(code ?? 1);
+  });
+
+  builderProcess.on("error", (err) => {
+    console.error("❌ Error running electron-builder:", err.message);
+    process.exit(1);
   });
 } catch (error) {
-  console.error("❌ Error:", error.message);
+  console.error("❌ Error getting git revision:", error.message);
+  console.error(
+    "   Make sure you are in a git repository and git is installed."
+  );
   process.exit(1);
 }

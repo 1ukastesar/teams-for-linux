@@ -73,6 +73,8 @@ npm run dist:linux
 npm run pack
 ```
 
+**Note**: All build commands automatically append the git revision (short hash) to the package version as a build number. For example, if you're building version `2.6.18` from commit `f97ae6e`, the Debian package will have version `2.6.18-f97ae6e` and RPM packages will have release `f97ae6e`. This ensures that packages from different builds of the same version can be distinguished.
+
 ### Docker/Podman Build
 
 For consistent builds across environments:
