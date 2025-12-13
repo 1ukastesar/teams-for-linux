@@ -1,0 +1,1 @@
+Add git revision to Debian/RPM package versions as build number - by @Copilot (#1)
