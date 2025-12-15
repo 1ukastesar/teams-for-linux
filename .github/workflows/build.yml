@@ -117,6 +117,12 @@ jobs:
           retention-days: 30
           compression-level: 6
 
+      - name: Upload Release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: dist/*
+
   linux_arm64:
     needs: [lint_and_audit]
     runs-on: ubuntu-latest
@@ -159,6 +165,12 @@ jobs:
           retention-days: 30
           compression-level: 6
 
+      - name: Upload Release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64
+          path: dist/*
+
   linux_arm:
     needs: [lint_and_audit]
     runs-on: ubuntu-latest
@@ -200,6 +212,12 @@ jobs:
             dist/*.AppImage
           retention-days: 30
           compression-level: 6
+
+      - name: Upload Release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm
+          path: dist/*
 
   dmg:
     needs: [lint_and_audit]
@@ -403,3 +421,7 @@ jobs:
                 body
               });
             }
+  repo:
+    needs: [linux_x64, linux_arm64, linux_arm]
+    uses: ./.github/workflows/upload.yml
+    secrets: inherit
