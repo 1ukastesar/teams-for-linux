@@ -6,14 +6,9 @@ const defaultHiddenSelectors = [
   "#download-app-button",
   "#get-app-button",
   "[data-tid^='more-options-menu-premium-button']",
-  "[data-tid='more-options-header'] > div:first-child",
-  "[data-tid='more-options-header'] > span:not(.fui-Button__icon)",
+  "div.fui-MenuDivider.\\_\\_\\_3pxu8i0.f8dz51a.f14z66ap.f1facbz3"
 ].join(", ");
-const hiddenSelectorsCss = `${defaultHiddenSelectors} { display: none !important; }`;
-const moreOptionsHeaderLayoutCss = "[data-tid='more-options-header'] { min-width: 0 !important; width: auto !important; gap: 0 !important; }";
-const premiumMenuSeparatorCss = "[data-tid^='more-options-menu-premium-button'] + [role='separator'] { display: none !important; }";
-const premiumMenuTopBorderCss = "[data-tid^='more-options-menu-premium-button'] + [role='menuitem'] { border-top: none !important; margin-top: 0 !important; }";
-const defaultHideCss = `${hiddenSelectorsCss}\n${moreOptionsHeaderLayoutCss}\n${premiumMenuSeparatorCss}\n${premiumMenuTopBorderCss}`;
+const defaultHideCss = `${defaultHiddenSelectors} { display: none !important; }`;
 const zoetropeCss = ".zoetrope { animation-iteration-count: 1 !important; }";
 
 exports.onDidFinishLoad = function onDidFinishLoad(content, config) {
