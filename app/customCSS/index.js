@@ -8,6 +8,7 @@ const defaultHiddenSelectors = [
   "[data-tid^='more-options-menu-premium-button']",
   "[data-tid='more-options-header'] > div:first-child",
   "[data-tid='more-options-header'] > span:not(.fui-Button__icon)",
+  "[data-tid^='more-options-menu-premium-button'] + div.fui-MenuDivider"
 ].join(", ");
 const hiddenSelectorsCss = `${defaultHiddenSelectors} { display: none !important; }`;
 const moreOptionsHeaderLayoutCss = "[data-tid='more-options-header'] { min-width: 0 !important; width: auto !important; gap: 0 !important; }";
