@@ -6,7 +6,7 @@ const defaultHiddenSelectors = [
   "#download-app-button",
   "#get-app-button",
   "[data-tid^='more-options-menu-premium-button']",
-  "div.fui-MenuDivider.\\_\\_\\_3pxu8i0.f8dz51a.f14z66ap.f1facbz3"
+  "[data-tid^='more-options-menu-premium-button'] + div.fui-MenuDivider"
 ].join(", ");
 const defaultHideCss = `${defaultHiddenSelectors} { display: none !important; }`;
 const zoetropeCss = ".zoetrope { animation-iteration-count: 1 !important; }";
