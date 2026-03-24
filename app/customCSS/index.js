@@ -1,15 +1,28 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+const defaultHiddenSelectors = [
+  "#download-mobile-app-button",
+  "#download-app-button",
+  "#get-app-button",
+  "[data-tid^='more-options-menu-premium-button']",
+  "[data-tid='more-options-header'] > div:first-child",
+  "[data-tid='more-options-header'] > span:not(.fui-Button__icon)",
+  "[data-tid^='more-options-menu-premium-button'] + div.fui-MenuDivider"
+].join(", ");
+const hiddenSelectorsCss = `${defaultHiddenSelectors} { display: none !important; }`;
+const moreOptionsHeaderLayoutCss = "[data-tid='more-options-header'] { min-width: 0 !important; width: auto !important; gap: 0 !important; }";
+const premiumMenuSeparatorCss = "[data-tid^='more-options-menu-premium-button'] + [role='separator'] { display: none !important; }";
+const premiumMenuTopBorderCss = "[data-tid^='more-options-menu-premium-button'] + [role='menuitem'] { border-top: none !important; margin-top: 0 !important; }";
+const defaultHideCss = `${hiddenSelectorsCss}\n${moreOptionsHeaderLayoutCss}\n${premiumMenuSeparatorCss}\n${premiumMenuTopBorderCss}`;
+const zoetropeCss = ".zoetrope { animation-iteration-count: 1 !important; }";
+
 exports.onDidFinishLoad = function onDidFinishLoad(content, config) {
   const customCssLocation = getCustomCssLocation(config);
   if (customCssLocation) {
     applyCustomCSSToContent(content, customCssLocation);
   }
-  content.insertCSS(
-    "#download-mobile-app-button, #download-app-button, #get-app-button { display:none; }"
-  );
-  content.insertCSS(".zoetrope { animation-iteration-count: 1 !important; }");
+  applyDefaultCSSToContent(content);
 };
 
 exports.onDidFrameFinishLoad = function onDidFrameFinishLoad(webFrame, config) {
@@ -17,6 +30,7 @@ exports.onDidFrameFinishLoad = function onDidFrameFinishLoad(webFrame, config) {
   if (customCssLocation) {
     applyCustomCSSToFrame(webFrame, customCssLocation);
   }
+  applyDefaultCSSToFrame(webFrame);
 };
 
 function getCustomCssLocation(config) {
@@ -34,6 +48,11 @@ function applyCustomCSSToContent(content, cssLocation) {
       content.insertCSS(data);
     }
   });
+}
+
+function applyDefaultCSSToContent(content) {
+  content.insertCSS(defaultHideCss);
+  content.insertCSS(zoetropeCss);
 }
 
 /**
@@ -65,4 +84,17 @@ function applyCustomCSSToFrame(webFrame, cssLocation) {
 			}
 		`);
   });
+}
+
+function applyDefaultCSSToFrame(webFrame) {
+  const cssContent = JSON.stringify(`${defaultHideCss}\n${zoetropeCss}`);
+  webFrame.executeJavaScript(`
+			if (!document.getElementById("tfl-default-css-style")) {
+				const style = document.createElement('style');
+				style.id = "tfl-default-css-style";
+				style.type = "text/css";
+				style.textContent = ${cssContent};
+				document.head.appendChild(style);
+			}
+		`);
 }
