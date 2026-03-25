@@ -17,6 +17,13 @@ const premiumMenuSeparatorCss = "[data-tid^='more-options-menu-premium-button'] 
 const premiumMenuTopBorderCss = "[data-tid^='more-options-menu-premium-button'] + [role='menuitem'] { border-top: none !important; margin-top: 0 !important; }";
 const defaultHideCss = `${hiddenSelectorsCss}\n${moreOptionsHeaderLayoutCss}\n${moreOptionsHeaderIconCss}\n${premiumMenuSeparatorCss}\n${premiumMenuTopBorderCss}`;
 const zoetropeCss = ".zoetrope { animation-iteration-count: 1 !important; }";
+const microsoftLoginHosts = [
+  "login.microsoftonline.com",
+  "login.live.com",
+  "login.microsoft.com",
+  "account.microsoft.com"
+];
+const loginFontFixCss = "html, body, div, span, p, label, a, input, button, select, textarea, #loginHeader, #loginHeader [role='heading'], .ext-title, .ext-title * { font-family: 'Segoe UI', 'Noto Sans', 'Helvetica Neue', Arial, sans-serif !important; }";
 
 exports.onDidFinishLoad = function onDidFinishLoad(content, config) {
   const customCssLocation = getCustomCssLocation(config);
@@ -54,6 +61,10 @@ function applyCustomCSSToContent(content, cssLocation) {
 function applyDefaultCSSToContent(content) {
   content.insertCSS(defaultHideCss);
   content.insertCSS(zoetropeCss);
+
+  if (shouldApplyMicrosoftLoginFontFix(content)) {
+    content.insertCSS(loginFontFixCss);
+  }
 }
 
 /**
@@ -89,6 +100,7 @@ function applyCustomCSSToFrame(webFrame, cssLocation) {
 
 function applyDefaultCSSToFrame(webFrame) {
   const cssContent = JSON.stringify(`${defaultHideCss}\n${zoetropeCss}`);
+  const loginCssContent = JSON.stringify(loginFontFixCss);
   webFrame.executeJavaScript(`
 			if (!document.getElementById("tfl-default-css-style")) {
 				const style = document.createElement('style');
@@ -97,5 +109,28 @@ function applyDefaultCSSToFrame(webFrame) {
 				style.textContent = ${cssContent};
 				document.head.appendChild(style);
 			}
+
+      if ((location.hostname === "login.microsoftonline.com" || location.hostname.endsWith(".microsoftonline.com") || location.hostname === "login.live.com" || location.hostname === "login.microsoft.com" || location.hostname === "account.microsoft.com") && !document.getElementById("tfl-login-font-fix-style")) {
+        const loginStyle = document.createElement('style');
+        loginStyle.id = "tfl-login-font-fix-style";
+        loginStyle.type = "text/css";
+        loginStyle.textContent = ${loginCssContent};
+        document.head.appendChild(loginStyle);
+      }
 		`);
+}
+
+function shouldApplyMicrosoftLoginFontFix(content) {
+  if (!content || typeof content.getURL !== "function") {
+    return false;
+  }
+
+  let hostname;
+  try {
+    ({ hostname } = new URL(content.getURL()));
+  } catch {
+    return false;
+  }
+
+  return hostname === "login.microsoftonline.com" || hostname.endsWith(".microsoftonline.com") || microsoftLoginHosts.includes(hostname);
 }
