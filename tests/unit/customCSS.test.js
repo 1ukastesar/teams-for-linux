@@ -16,6 +16,7 @@ describe('customCSS default injected rules', () => {
 
 		assert.strictEqual(content.insertCSS.mock.calls.length, 2);
 		const injectedRule = content.insertCSS.mock.calls[0].arguments[0];
+		assert.match(injectedRule, /\[data-tid='more-options-menu-download-mobile-apps']/);
 		assert.match(injectedRule, /\[data-tid\^='more-options-menu-premium-button']/);
 		assert.match(injectedRule, /\[data-tid='more-options-header'] > div:first-child/);
 		assert.match(injectedRule, /\[data-tid='more-options-header'] > span:not\(\.fui-Button__icon\)/);
