@@ -59,6 +59,10 @@ jobs:
 
           echo "Rebase completed successfully."
 
+          cp .github/README.fork.md README.md
+          git add README.md
+          git commit -m "chore: keep fork README" || true
+
           # This authenticates with secrets.ACTIONS_PAT, because it was
           # used with the checkout action
           git push --force-with-lease --force-if-includes origin main
