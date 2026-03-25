@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const defaultHiddenSelectors = [
-  "#download-mobile-app-button",
+  "[data-tid='more-options-menu-download-mobile-apps']",
   "#download-app-button",
   "#get-app-button",
   "[data-tid^='more-options-menu-premium-button']",
