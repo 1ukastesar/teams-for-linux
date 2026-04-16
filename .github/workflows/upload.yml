@@ -1,5 +1,9 @@
 name: Upload to APT & RPM repos
 
+permissions:
+  contents: read
+  actions: read
+
 on:
   workflow_call:
     secrets:
