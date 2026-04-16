@@ -147,7 +147,7 @@ class TeamsTokenCache {
         await this.removeItem(key);
       }
       
-      console.debug(`[TOKEN_CACHE] Cleared ${authKeys.length} auth keys`);
+      console.debug('[TOKEN_CACHE] Cleared auth-related cache entries');
     } catch (error) {
       console.error('[TOKEN_CACHE] clear failed:', error.message);
     }
