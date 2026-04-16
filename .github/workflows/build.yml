@@ -440,5 +440,8 @@ jobs:
   repo:
     needs: [linux_x64, linux_arm64, linux_arm]
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      actions: read
     uses: ./.github/workflows/upload.yml
     secrets: inherit
