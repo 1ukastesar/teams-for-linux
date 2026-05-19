@@ -73,7 +73,7 @@ describe('customCSS default injected rules', () => {
 	});
 
 	it('injects both custom and default CSS into Teams V2 frame when customCSSLocation is set', () => {
-		const webFrame = { executeJavaScript: mock.fn() };
+		const webFrame = { executeJavaScript: mock.fn(() => Promise.resolve()) };
 		const customCssLocation = path.join(os.tmpdir(), 'mock-frame-custom-css.css');
 		const readFileMock = mock.method(fs, 'readFile', (_filePath, _encoding, callback) => {
 			callback(null, '.from-custom-frame { color: red; }');
