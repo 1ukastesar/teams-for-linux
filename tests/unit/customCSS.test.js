@@ -61,7 +61,7 @@ describe('customCSS default injected rules', () => {
 	});
 
 	it('injects default premium-hiding CSS into Teams V2 frame', () => {
-		const webFrame = { executeJavaScript: mock.fn() };
+		const webFrame = { url: 'https://teams.microsoft.com/v2/', executeJavaScript: mock.fn(() => Promise.resolve()) };
 
 		customCSS.onDidFrameFinishLoad(webFrame, {});
 
@@ -73,7 +73,7 @@ describe('customCSS default injected rules', () => {
 	});
 
 	it('injects both custom and default CSS into Teams V2 frame when customCSSLocation is set', () => {
-		const webFrame = { executeJavaScript: mock.fn(() => Promise.resolve()) };
+		const webFrame = { url: 'https://teams.microsoft.com/v2/', executeJavaScript: mock.fn(() => Promise.resolve()) };
 		const customCssLocation = path.join(os.tmpdir(), 'mock-frame-custom-css.css');
 		const readFileMock = mock.method(fs, 'readFile', (_filePath, _encoding, callback) => {
 			callback(null, '.from-custom-frame { color: red; }');
@@ -91,5 +91,19 @@ describe('customCSS default injected rules', () => {
 		} finally {
 			readFileMock.mock.restore();
 		}
+	});
+
+	it('skips non-Teams frames (e.g. Word/Excel embedded apps)', () => {
+		const webFrame = { url: 'https://word-edit.officeapps.live.com/we/wordeditorframe.aspx', executeJavaScript: mock.fn() };
+
+		customCSS.onDidFrameFinishLoad(webFrame, {});
+
+		assert.strictEqual(webFrame.executeJavaScript.mock.calls.length, 0);
+	});
+
+	it('skips frames with no url (null/undefined webFrame)', () => {
+		// Should not throw
+		customCSS.onDidFrameFinishLoad(null, {});
+		customCSS.onDidFrameFinishLoad(undefined, {});
 	});
 });
