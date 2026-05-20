@@ -33,7 +33,27 @@ exports.onDidFinishLoad = function onDidFinishLoad(content, config) {
   applyDefaultCSSToContent(content);
 };
 
+const teamsFrameHosts = [
+  "teams.microsoft.com",
+  "teams.live.com",
+  "teams.cdn.office.net",
+];
+
 exports.onDidFrameFinishLoad = function onDidFrameFinishLoad(webFrame, config) {
+  if (!webFrame) {
+    return;
+  }
+
+  try {
+    const { hostname } = new URL(webFrame.url);
+    const isTeamsFrame = teamsFrameHosts.some((h) => hostname === h || hostname.endsWith(`.${h}`));
+    if (!isTeamsFrame) {
+      return;
+    }
+  } catch {
+    return;
+  }
+
   const customCssLocation = getCustomCssLocation(config);
   if (customCssLocation) {
     applyCustomCSSToFrame(webFrame, customCssLocation);
@@ -109,7 +129,8 @@ function applyCustomCSSToFrame(webFrame, cssLocation) {
 function applyDefaultCSSToFrame(webFrame) {
   const cssContent = JSON.stringify(`${defaultHideCss}\n${zoetropeCss}`);
   const loginCssContent = JSON.stringify(loginFontFixCss);
-  webFrame.executeJavaScript(`
+  webFrame
+    .executeJavaScript(`
 			if (!document.getElementById("tfl-default-css-style")) {
 				const style = document.createElement('style');
 				style.id = "tfl-default-css-style";
@@ -125,7 +146,10 @@ function applyDefaultCSSToFrame(webFrame) {
         loginStyle.textContent = ${loginCssContent};
         document.head.appendChild(loginStyle);
       }
-		`);
+		`)
+    .catch((err) => {
+      console.debug("[customCSS] executeJavaScript rejected:", err);
+    });
 }
 
 function shouldApplyMicrosoftLoginFontFix(content) {
