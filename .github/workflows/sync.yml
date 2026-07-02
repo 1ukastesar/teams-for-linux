@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.ACTIONS_PAT }}
       - name: Rebase onto upstream
         run: |
           git config --global user.name "${{ secrets.REPOSITORY_OWNER_NAME }}"
@@ -65,16 +63,14 @@ jobs:
           git add README.md
           git commit -m "chore: keep fork README" || true
 
-          # This authenticates with secrets.ACTIONS_PAT, because it was
-          # used with the checkout action
+          # Authenticates with the built-in GITHUB_TOKEN persisted by the
+          # checkout action (permissions: contents: write, declared above).
           git push --force-with-lease --force-if-includes origin main
 
-      - name: Trigger build
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.repos.createDispatchEvent({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              event_type: 'publish-trigger',
-            });
+  # Run the build (which in turn uploads via its `repo` job) as part of this
+  # run. A push made with GITHUB_TOKEN does not trigger other workflows, so we
+  # invoke build.yml explicitly instead of relying on its `push` trigger.
+  build:
+    needs: [rebase]
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
